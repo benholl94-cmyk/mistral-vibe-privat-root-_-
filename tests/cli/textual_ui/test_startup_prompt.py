@@ -100,16 +100,10 @@ def test_run_textual_ui_warms_auto_theme_before_app_server_start(
     app_server.resources = MagicMock()
     app_server.resources.config.current.theme = theme
     start_app_server = AsyncMock(return_value=app_server)
-    promo_repository = MagicMock()
-    promo_repository.get = AsyncMock(return_value=None)
 
     with (
         patch("vibe.cli.textual_ui.app.resolve_auto_theme") as resolve_auto_theme,
         patch("vibe.cli.textual_ui.app.VibeApp") as vibe_app,
-        patch(
-            "vibe.cli.textual_ui.app.FileSystemVscodeExtensionPromoRepository",
-            return_value=promo_repository,
-        ),
         patch(
             "vibe.cli.textual_ui.app._run_app_with_cleanup",
             new=AsyncMock(return_value=None),

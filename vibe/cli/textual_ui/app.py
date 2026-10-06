@@ -146,7 +146,6 @@ from vibe.cli.textual_ui.widgets.loading import (
     paused_timer,
 )
 from vibe.cli.textual_ui.widgets.messages import (
-    VSCODE_EXTENSION_PROMO_WHATS_NEW_SUFFIX,
     AssistantMessage,
     ErrorMessage,
     GreetingMessage,
@@ -158,7 +157,6 @@ from vibe.cli.textual_ui.widgets.messages import (
     TeleportUserMessage,
     UserCommandMessage,
     UserMessage,
-    VscodeExtensionPromoMessage,
     WarningMessage,
     WhatsNewMessage,
 )
@@ -218,12 +216,6 @@ from vibe.cli.update_notifier import (
 )
 from vibe.cli.voice_manager import VoiceManagerPort
 from vibe.cli.voice_manager.voice_manager_port import TranscribeState
-from vibe.cli.vscode_extension_promo import (
-    FileSystemVscodeExtensionPromoRepository,
-    VscodeExtensionPromo,
-    VscodeExtensionPromoState,
-    should_show_promo,
-)
 from vibe.observability.logging import logger
 from vibe.observability.sentry import capture_sentry_exception
 from vibe.utils.cache_store import FileSystemCacheStore
@@ -528,7 +520,6 @@ class VibeApp(App):  # noqa: PLR0904
         terminal_notifier: NotificationPort | None = None,
         voice_manager: VoiceManagerPort | None = None,
         narrator_manager: NarratorManagerPort | None = None,
-        vscode_extension_promo: VscodeExtensionPromo | None = None,
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
@@ -573,12 +564,6 @@ class VibeApp(App):  # noqa: PLR0904
         self._update_notifier = update_notifier
         self._update_cache_repository = update_cache_repository
         self._current_version = current_version
-        self._vscode_extension_promo = vscode_extension_promo
-        self._show_vscode_extension_promo = (
-            vscode_extension_promo is not None
-            and _is_vscode_family_terminal()
-            and should_show_promo(vscode_extension_promo.initial_state)
-        )
         self._configure_startup_options(startup)
         self._last_escape_time: float | None = None
         self._quit_manager = QuitManager(self)
@@ -4051,32 +4036,13 @@ class VibeApp(App):  # noqa: PLR0904
             )
             await self._mount_and_scroll(WarningMessage(warning, show_border=False))
 
-    async def _record_vscode_extension_promo_shown(self) -> None:
-        if self._vscode_extension_promo is None:
-            return
-        previous_count = (
-            self._vscode_extension_promo.initial_state.shown_count
-            if self._vscode_extension_promo.initial_state is not None
-            else 0
-        )
-        try:
-            await self._vscode_extension_promo.repository.set(
-                VscodeExtensionPromoState(shown_count=previous_count + 1)
-            )
-        except Exception:
-            logger.warning(
-                "Failed to persist VSCode extension promo shown count", exc_info=True
-            )
-
     async def _check_and_show_whats_new(self) -> None:
         if self._update_cache_repository is None:
-            await self._maybe_show_vscode_extension_promo()
             return
 
         if not await should_show_whats_new(
             self._current_version, self._update_cache_repository
         ):
-            await self._maybe_show_vscode_extension_promo()
             return
 
         content = load_whats_new_content()
@@ -4085,8 +4051,6 @@ class VibeApp(App):  # noqa: PLR0904
             plan_offer = plan_offer_cta(self.app_server.resources.account.current)
             if plan_offer is not None:
                 body = f"{body}\n\n{plan_offer}"
-            if self._show_vscode_extension_promo:
-                body = f"{body}{VSCODE_EXTENSION_PROMO_WHATS_NEW_SUFFIX}"
             whats_new_message = WhatsNewMessage(body)
             if self._history_widget_indices:
                 whats_new_message.add_class("after-history")
@@ -4096,12 +4060,6 @@ class VibeApp(App):  # noqa: PLR0904
             self._whats_new_message = whats_new_message
             if should_anchor:
                 chat.anchor()
-            if self._show_vscode_extension_promo:
-                self.run_worker(
-                    self._record_vscode_extension_promo_shown(), exclusive=False
-                )
-        else:
-            await self._maybe_show_vscode_extension_promo()
         await mark_version_as_seen(self._current_version, self._update_cache_repository)
 
     async def _show_greeting_message(self) -> None:
@@ -4126,17 +4084,6 @@ class VibeApp(App):  # noqa: PLR0904
         self._greeting_message = None
         if greeting.parent:
             greeting.remove()
-
-    async def _maybe_show_vscode_extension_promo(self) -> None:
-        if not self._show_vscode_extension_promo:
-            return
-        promo_message = VscodeExtensionPromoMessage()
-        chat = self._chat_widget
-        should_anchor = chat.is_at_bottom
-        await chat.mount(promo_message, before=self._messages_area)
-        if should_anchor:
-            chat.anchor()
-        self.run_worker(self._record_vscode_extension_promo_shown(), exclusive=False)
 
     async def _refresh_account(self) -> None:
         try:
@@ -4400,18 +4347,12 @@ def run_textual_ui(
                 prompt_for_workspace_trust=False,
             )
         update_notifier = PyPIUpdateGateway(project_name="mistral-vibe")
-        vscode_extension_promo_repository = FileSystemVscodeExtensionPromoRepository()
-        vscode_extension_promo = VscodeExtensionPromo(
-            repository=vscode_extension_promo_repository,
-            initial_state=await vscode_extension_promo_repository.get(),
-        )
         app = VibeApp(
             app_server=app_server,
             history_file=history_file,
             startup=effective_startup,
             update_notifier=update_notifier,
             update_cache_repository=update_cache_repository,
-            vscode_extension_promo=vscode_extension_promo,
         )
         return await _run_app_with_cleanup(app)
 

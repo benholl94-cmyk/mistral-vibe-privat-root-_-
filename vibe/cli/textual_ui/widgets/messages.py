@@ -423,15 +423,6 @@ class UserCommandMessage(Static):
                 yield Markdown(self._content)
 
 
-VSCODE_EXTENSION_URI = "vscode:extension/mistralai.mistral-vibe-code"
-VSCODE_EXTENSION_LINK_LABEL = "VS Code extension"
-VSCODE_EXTENSION_PROMO_STANDALONE = f"We now have a [{VSCODE_EXTENSION_LINK_LABEL}]({VSCODE_EXTENSION_URI}) with a rich UI. Check it out!"
-VSCODE_EXTENSION_PROMO_WHATS_NEW_SUFFIX = (
-    f"\n\n_Btw, we also have a new [{VSCODE_EXTENSION_LINK_LABEL}]"
-    f"({VSCODE_EXTENSION_URI}). Check it out!_"
-)
-
-
 class WhatsNewMessage(Static):
     def __init__(self, content: str) -> None:
         super().__init__()
@@ -450,16 +441,6 @@ class GreetingMessage(Static):
 
     def compose(self) -> ComposeResult:
         yield NoMarkupStatic(f"Hello {self._username}, how can I help you?")
-
-
-class VscodeExtensionPromoMessage(Static):
-    def __init__(self, content: str = VSCODE_EXTENSION_PROMO_STANDALONE) -> None:
-        super().__init__()
-        self.add_class("vscode-extension-promo-message")
-        self._content = content
-
-    def compose(self) -> ComposeResult:
-        yield Markdown(self._content)
 
 
 class InterruptMessage(Static):
