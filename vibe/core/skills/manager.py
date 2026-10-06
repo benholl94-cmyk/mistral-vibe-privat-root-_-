@@ -10,6 +10,10 @@ from vibe.core.config.harness_files import (
     get_harness_files_manager,
 )
 from vibe.core.skills.builtins import BUILTIN_SKILLS
+from vibe.core.skills.builtins.master_skill_registry import (
+    get_master_registry,
+    MasterSkillRegistry,
+)
 from vibe.core.skills.models import (
     ParsedSkillCommand,
     SkillConfigIssue,
@@ -171,6 +175,30 @@ class SkillManager:
 
     def get_skill(self, name: str) -> SkillInfo | None:
         return self.available_skills.get(name)
+    
+    def get_master_registry(self) -> MasterSkillRegistry:
+        """Holt die Instanz des Master Skill Registry für erweiterte Abfragen"""
+        return get_master_registry()
+    
+    def search_all_skills(self, query: str) -> list[dict]:
+        """Durchsucht alle Skills (inkl. Built-in und Registry) nach einem Suchbegriff"""
+        master_registry = self.get_master_registry()
+        return master_registry.search_skills(query)
+    
+    def search_all_tools(self, query: str) -> list[dict]:
+        """Durchsucht alle Tools nach einem Suchbegriff"""
+        master_registry = self.get_master_registry()
+        return master_registry.search_tools(query)
+    
+    def list_tool_categories(self) -> dict:
+        """Listet alle Tool-Kategorien mit ihren Tools"""
+        master_registry = self.get_master_registry()
+        return master_registry.list_tools_by_category()
+    
+    def get_tool_info(self, tool_name: str) -> dict | None:
+        """Holt detaillierte Informationen zu einem Tool"""
+        master_registry = self.get_master_registry()
+        return master_registry.get_tool_info(tool_name)
 
     def parse_skill_command(self, text_prompt: str) -> ParsedSkillCommand | None:
         stripped = text_prompt.strip()
