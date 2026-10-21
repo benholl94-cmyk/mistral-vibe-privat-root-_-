@@ -1,24 +1,56 @@
 name: Bug Report
-description: Tell us about a defect in Mistral Vibe
-title: "bug: "
-labels: ["bug"]
+description: Report a defect in Mistral Vibe
+title: "[BUG] "
+labels: ["bug", "triage-needed"]
+assignees: []
 body:
   - type: markdown
     attributes:
-      value: >
-        Thanks for filing a detailed bug. Fill out every section so we can
-        reproduce the issue quickly
+      value: |-
+        ## Bug Report Grounding
+
+        **Owner Action Items:**
+        - [ ] Verify issue is reproducible on latest `main` branch
+        - [ ] Check for existing duplicates
+        - [ ] Assess severity (P0-P3) based on impact
+        - [ ] Assign to appropriate component owner
+        - [ ] Request additional info if reproduction steps are unclear
+
+        **Reporter:** Please fill out every section below. Incomplete reports will be closed.
 
   - type: dropdown
     id: component
     attributes:
       label: Component
       description: Which part of Mistral Vibe is affected?
+      multiple: false
       options:
-        - CLI
-        - ACP
-        - VS Code extension
-        - Other
+        - CLI (Textual TUI)
+        - ACP (Agent Client Protocol)
+        - VS Code Extension
+        - Core Engine
+        - Agent Loop
+        - Tools System
+        - Configuration
+        - Authentication
+        - Sessions
+        - Build/Packaging
+        - Documentation
+        - Other (specify below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Impact level for triage
+      multiple: false
+      options:
+        - P0 - Critical (blocks core functionality, data loss)
+        - P1 - High (major feature broken, workaround difficult)
+        - P2 - Medium (partial functionality affected, workaround exists)
+        - P3 - Low (cosmetic, minor inconvenience)
     validations:
       required: true
 
@@ -26,34 +58,117 @@ body:
     id: summary
     attributes:
       label: Summary
-      description: What went wrong? Keep it short but specific.
+      description: |-
+        **Owner Note:** Look for patterns - is this a regression? Related to recent changes?
+        One-sentence description of the defect.
+      placeholder: "e.g., Tool execution hangs when file path contains special characters"
     validations:
       required: true
 
   - type: textarea
-    id: repro
+    id: expected-behavior
     attributes:
-      label: Reproduction steps
-      description: >
-        Commands, code, or payloads that trigger the bug. Include any relevant
-        input files or snippets (redact secrets).
+      label: Expected Behavior
+      description: What should happen?
+      placeholder: "e.g., Tool should execute successfully and return file contents"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What happens instead? Include error messages, stack traces, or unexpected output.
+      placeholder: "e.g., Tool hangs indefinitely, no error message"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Reproduction Steps
+      description: |-
+        **Owner Note:** Reproduce locally before engaging with reporter.
+        Step-by-step instructions to trigger the bug. Be specific.
+      placeholder: |-
+        1. Run `vibe --model mistral-large`
+        2. Execute `/grep` tool with pattern `test`
+        3. Observe hang
     validations:
       required: true
 
   - type: input
-    id: versions
+    id: vibe-version
     attributes:
-      label: Versions / environment
-      description: >
-        Include the version for the affected component, uv or pip when
-        relevant and OS.
-      placeholder: "mistral-vibe 1.2.0 or Mistral Vibe VS Code 1.1.0, uv 0.9.0 on macOS 15.7"
+      label: Vibe Version
+      description: Output of `vibe --version` or `pip show mistral-vibe`
+      placeholder: "e.g., 2.24.0 or main@abc123"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: Output of `python --version`
+      placeholder: "e.g., Python 3.12.3"
+    validations:
+      required: true
+
+  - type: input
+    id: os-platform
+    attributes:
+      label: Operating System
+      description: Platform and version
+      placeholder: "e.g., Ubuntu 24.04, macOS 15.2, Windows 11"
     validations:
       required: true
 
   - type: textarea
-    id: logs
+    id: environment-details
     attributes:
-      label: Logs & screenshots
-      description: Paste relevant stack traces, JSON snippets, or console output.
+      label: Environment Details
+      description: |-
+        **Owner Note:** Check for known environment-specific issues.
+        Shell, terminal, proxy settings, or other relevant context.
+      placeholder: "e.g., zsh, iTerm2, no proxy, uv 0.9.0"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs-and-traces
+    attributes:
+      label: Logs & Stack Traces
+      description: |-
+        **Owner Note:** Look for exception chains, not just top-level errors.
+        Paste relevant log output, stack traces, or console errors.
+        Use code blocks for readability.
       render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |-
+        **Owner Note:** Check for related issues, PRs, or recent changes.
+        Links to related issues, screenshots, or videos.
+        Any workarounds you've found.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Reporter Checklist
+      description: Confirm you've completed these steps
+      options:
+        - label: I have searched existing open and closed issues
+          required: true
+        - label: I have reproduced the issue on the latest version
+          required: true
+        - label: I have included all relevant details for reproduction
+          required: true
+        - label: I have not shared any secrets, tokens, or sensitive data
+          required: true

@@ -5,7 +5,7 @@ on:
         types: [opened]
 
 jobs:
-    label-component:
+    label-issues:
         runs-on: ubuntu-latest
         permissions:
             contents: read
@@ -27,38 +27,95 @@ jobs:
                   template-path: .github/ISSUE_TEMPLATE/feature-request.yml
               continue-on-error: true
 
-            - name: Apply component label
+            - name: Apply labels based on template
               uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
               env:
                   BUG_COMPONENT: ${{ steps.parse-bug.outputs.issueparser_component }}
+                  BUG_SEVERITY: ${{ steps.parse-bug.outputs.issueparser_severity }}
                   FEATURE_COMPONENT: ${{ steps.parse-feature.outputs.issueparser_component }}
+                  FEATURE_PRIORITY: ${{ steps.parse-feature.outputs.issueparser_priority }}
+                  ISSUE_TITLE: ${{ github.event.issue.title }}
               with:
                   script: |
-                      const bugComponent = process.env.BUG_COMPONENT;
-                      const featureComponent = process.env.FEATURE_COMPONENT;
-                      const component = bugComponent || featureComponent;
+                      const { BUG_COMPONENT, BUG_SEVERITY, FEATURE_COMPONENT, FEATURE_PRIORITY, ISSUE_TITLE } = process.env;
 
-                      if (!component) {
-                        console.log('No component field found, skipping labeling');
-                        return;
+                      // Determine if this is a bug or feature based on title or template
+                      const isBug = ISSUE_TITLE.includes('[BUG]') || BUG_COMPONENT;
+                      const isFeature = ISSUE_TITLE.includes('[FEAT]') || FEATURE_COMPONENT;
+
+                      const labels = [];
+
+                      // Component labels
+                      const component = BUG_COMPONENT || FEATURE_COMPONENT;
+                      if (component) {
+                          const componentLabels = new Map([
+                              ['CLI (Textual TUI)', 'CLI'],
+                              ['ACP (Agent Client Protocol)', 'ACP'],
+                              ['VS Code Extension', 'VS Code extension'],
+                              ['Core Engine', 'core'],
+                              ['Agent Loop', 'agent-loop'],
+                              ['Tools System', 'tools'],
+                              ['Configuration', 'config'],
+                              ['Authentication', 'auth'],
+                              ['Sessions', 'sessions'],
+                              ['Build/Packaging', 'build'],
+                              ['Documentation', 'docs'],
+                              ['Other (specify below)', 'needs-triage'],
+                          ]);
+                          const label = componentLabels.get(component);
+                          if (label) {
+                              labels.push(label);
+                          }
                       }
 
-                      const componentLabels = new Map([
-                        ['CLI', 'CLI'],
-                        ['ACP', 'ACP'],
-                        ['VS Code extension', 'VS Code extension'],
-                      ]);
-                      const label = componentLabels.get(component);
-
-                      if (!label) {
-                        console.log(`Unknown component '${component}', skipping labeling`);
-                        return;
+                      // Type labels
+                      if (isBug) {
+                          labels.push('bug');
+                          // Add severity label if available
+                          if (BUG_SEVERITY) {
+                              const severityMap = new Map([
+                                  ['P0 - Critical (blocks core functionality, data loss)', 'severity/critical'],
+                                  ['P1 - High (major feature broken, workaround difficult)', 'severity/high'],
+                                  ['P2 - Medium (partial functionality affected, workaround exists)', 'severity/medium'],
+                                  ['P3 - Low (cosmetic, minor inconvenience)', 'severity/low'],
+                              ]);
+                              const severityLabel = severityMap.get(BUG_SEVERITY);
+                              if (severityLabel) {
+                                  labels.push(severityLabel);
+                              }
+                          }
                       }
 
-                      await github.rest.issues.addLabels({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        issue_number: context.issue.number,
-                        labels: [label],
-                      });
-                      console.log(`Added label: ${label}`);
+                      if (isFeature) {
+                          labels.push('enhancement');
+                          // Add priority label if available
+                          if (FEATURE_PRIORITY) {
+                              const priorityMap = new Map([
+                                  ['P0 - Blocking (cannot use Vibe without this)', 'priority/critical'],
+                                  ['P1 - High (significant productivity impact)', 'priority/high'],
+                                  ['P2 - Medium (nice to have, moderate impact)', 'priority/medium'],
+                                  ['P3 - Low (minor convenience improvement)', 'priority/low'],
+                              ]);
+                              const priorityLabel = priorityMap.get(FEATURE_PRIORITY);
+                              if (priorityLabel) {
+                                  labels.push(priorityLabel);
+                              }
+                          }
+                      }
+
+                      // Always add triage label if no labels were added
+                      if (labels.length === 0) {
+                          labels.push('triage-needed');
+                      }
+
+                      if (labels.length > 0) {
+                          await github.rest.issues.addLabels({
+                              owner: context.repo.owner,
+                              repo: context.repo.repo,
+                              issue_number: context.issue.number,
+                              labels: labels,
+                          });
+                          console.log(`Added labels: ${labels.join(', ')}`);
+                      } else {
+                          console.log('No labels to add');
+                      }

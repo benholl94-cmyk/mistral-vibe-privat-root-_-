@@ -1,0 +1,162 @@
+name: Feature Request
+description: Suggest a new feature or improvement for Mistral Vibe
+title: "[FEAT] "
+labels: ["enhancement", "triage-needed"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |-
+        ## Feature Request Grounding
+
+        **Owner Action Items:**
+        - [ ] Assess alignment with project roadmap and architecture principles
+        - [ ] Check for existing feature requests or discussions
+        - [ ] Evaluate implementation complexity (S/M/L/XL)
+        - [ ] Identify potential breaking changes or migration paths
+        - [ ] Assign to appropriate component owner for review
+        - [ ] Request clarifications on use cases if unclear
+
+        **Reporter:** Please focus on the problem, not just the solution. Well-specified problems lead to better features.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Target Component
+      description: Which part of Mistral Vibe should this feature apply to?
+      multiple: false
+      options:
+        - CLI (Textual TUI)
+        - ACP (Agent Client Protocol)
+        - VS Code Extension
+        - Core Engine
+        - Agent Loop
+        - Tools System
+        - Configuration
+        - Authentication
+        - Sessions
+        - Build/Packaging
+        - Documentation
+        - Other (specify below)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature for your workflow?
+      multiple: false
+      options:
+        - P0 - Blocking (cannot use Vibe without this)
+        - P1 - High (significant productivity impact)
+        - P2 - Medium (nice to have, moderate impact)
+        - P3 - Low (minor convenience improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: |-
+        **Owner Note:** Look for the underlying need, not just the requested solution.
+        Clear description of the problem you're trying to solve.
+        What use case is blocked? What pain point exists?
+      placeholder: |-
+        As a user, I need to... so that I can...
+        Currently, I have to... which is problematic because...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: |-
+        **Owner Note:** Evaluate against architecture principles (ADR-0001).
+        Your suggested implementation or API design.
+        Include code snippets if helpful.
+      placeholder: |-
+        Add a new `/command` that...
+        Extend the Tool interface with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives-considered
+    attributes:
+      label: Alternatives Considered
+      description: |-
+        **Owner Note:** Check if existing features can solve this with configuration.
+        Other approaches you've considered and why they weren't suitable.
+      placeholder: |-
+        I considered using X, but it doesn't support Y.
+        I tried configuring Z, but it lacks A.
+    validations:
+      required: false
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: |-
+        **Owner Note:** Assess breadth of applicability.
+        Specific scenarios where this feature would be valuable.
+        Include frequency of occurrence if known.
+      placeholder: |-
+        - Daily: When I need to...
+        - Weekly: When our team...
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: |-
+        **Owner Note:** Use for defining scope and MVP.
+        What must be true for this feature to be considered complete?
+        List specific, testable conditions.
+      placeholder: |-
+        - [ ] Feature works in CLI
+        - [ ] Feature works in ACP
+        - [ ] Documentation updated
+        - [ ] Tests added
+    validations:
+      required: false
+
+  - type: input
+    id: related-issues
+    attributes:
+      label: Related Issues/PRs
+      description: Links to related issues, pull requests, or discussions
+      placeholder: "#123, #456, https://github.com/..."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: |-
+        **Owner Note:** Check for external dependencies or constraints.
+        Screenshots, mockups, references to similar features in other tools,
+        or any other relevant information.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Reporter Checklist
+      description: Confirm you've completed these steps
+      options:
+        - label: I have searched existing feature requests and discussions
+          required: true
+        - label: I have checked the documentation
+          required: true
+        - label: This feature aligns with the project's goals (per README/ADRs)
+          required: true
+        - label: I have not shared any secrets, tokens, or sensitive data
+          required: true
